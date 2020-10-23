@@ -155,9 +155,9 @@ void printData
 
   float lux = lightMeter.readLightLevel();
 
-  client->print("{\"Sensors\": [{ \"BME280\": { \"Temp\": " + String(temp) + " ,\"Humidity\": " + String(hum) + " ,\"Pressure\": " + String(pres));
-  client->print(", \"DewPoint\": " + String(dewPoint) + ", \"EquivSeaLvlPressure\": " + String(seaLevel) + "}, \"SGP30\": { ");
-  client->print("\"RawH2\": " + String(rawh2) + ", \"RawEthanol\":" + String(rawethanol) + ", \"TVOC\": "  +  String(tvoc) + ", \"eCO2\": " + String(eco2) + "}, ");
-  client->print("\"BH1750FVI\": { \"lux\": " + String(lux) + "} }]}");
+  client->print("{ \"Temp\": " + String(temp) + ", \"Humidity\": " + String(hum) + ", \"Pressure\": " + String(pres));
+  client->print(", \"DewPoint\": " + String(dewPoint) + ", \"EquivSeaLvlPressure\": " + String(seaLevel));
+  client->print(", \"RawH2\": " + String(rawh2) + ", \"RawEthanol\":" + String(rawethanol) + ", \"TVOC\": "  +  String(tvoc) + ", \"eCO2\": " + String(eco2));
+  client->print(", \"lux\": " + String(lux) + " }");
   client->println();
 }
