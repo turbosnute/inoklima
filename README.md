@@ -14,15 +14,20 @@ Uses the breakout board sensors BME280, SGP30 and BH1750fvi.
 - Lux
 
 ## Schematics
+![alt text][logo]
+
+[logo]: https://github.com/turbosnute/inoklima/blob/main/inoklima_figure.png
 ```
 Connecting the BME280  +  SGP30  +  BJ1750 (i2c) Sensors:
 Sensor              ->  Board
 -----------------------------
-Vin (Voltage In)    ->  3.3V
+Vin (Voltage In)    ->  3.3V or 5.0V
 Gnd (Ground)        ->  Gnd
 SDA (Serial Data)   ->  A4 on Uno/Pro-Mini, 20 on Mega2560/Due, 2 Leonardo/Pro-Micro
 SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-Micro
 ```
+
+
 
 ## Example output
 ```
