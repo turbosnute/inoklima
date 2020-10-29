@@ -27,9 +27,7 @@ SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-M
 
 BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
-
 Adafruit_SGP30 sgp;
-
 BH1750 lightMeter;
 
 /* return absolute humidity [mg/m^3] with approximation formula
@@ -77,15 +75,24 @@ void setup()
 
   lightMeter.begin();
 
-  Serial.print("Found SGP30 serial #");
+  Serial.print("{ \"Request\": \"SGP30_Baseline\", \"Serial\": \"");
+  Serial.print("0x");
   Serial.print(sgp.serialnumber[0], HEX);
   Serial.print(sgp.serialnumber[1], HEX);
-  Serial.println(sgp.serialnumber[2], HEX);
+  Serial.print(sgp.serialnumber[2], HEX);
+  Serial.println("\" }");
+
 
   // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
   //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
 
 }
+
+void process_data (char * data)
+{
+  // for now just display it
+  Serial.println (data);
+}  // end of process_data
 
 //////////////////////////////////////////////////////////////////
 int counter = 0;
@@ -147,8 +154,18 @@ void printData
     if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
       //Serial.println("Failed to get baseline readings");
       return;
+    } else {
+      Serial.print("{ \"ECO2BASE\": \"");
+      Serial.print(eCO2_base, HEX);
+      Serial.print("\", \"TVOCBASE\": \"");
+      Serial.print(TVOC_base, HEX);
+      Serial.print("\", \"Serial\": ");
+      Serial.print("\"0x");
+      Serial.print(sgp.serialnumber[0], HEX);
+      Serial.print(sgp.serialnumber[1], HEX);
+      Serial.print(sgp.serialnumber[2], HEX);
+      Serial.println("\" }");
     }
-
   }
 
   delay(100);
@@ -157,7 +174,7 @@ void printData
 
   client->print("{ \"Temp\": " + String(temp) + ", \"Humidity\": " + String(hum) + ", \"Pressure\": " + String(pres));
   client->print(", \"DewPoint\": " + String(dewPoint) + ", \"EquivSeaLvlPressure\": " + String(seaLevel));
-  client->print(", \"RawH2\": " + String(rawh2) + ", \"RawEthanol\":" + String(rawethanol) + ", \"TVOC\": "  +  String(tvoc) + ", \"eCO2\": " + String(eco2));
+  client->print(", \"RawH2\": " + String(rawh2) + ", \"RawEthanol\": " + String(rawethanol) + ", \"TVOC\": "  +  String(tvoc) + ", \"eCO2\": " + String(eco2));
   client->print(", \"lux\": " + String(lux) + " }");
   client->println();
 }
