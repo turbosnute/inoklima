@@ -22,6 +22,7 @@ SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-M
 #include "Adafruit_SGP30.h"
 #include <Wire.h>
 #include <BH1750.h>
+#include <stdlib.h>
 
 #define SERIAL_BAUD 115200
 
@@ -29,6 +30,12 @@ BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 Adafruit_SGP30 sgp;
 BH1750 lightMeter;
+
+// Serial read:
+const byte numChars = 32;
+char receivedChars[numChars];
+boolean newData = false;
+boolean wait = true;
 
 /* return absolute humidity [mg/m^3] with approximation formula
 * @param temperature [°C]
@@ -83,9 +90,36 @@ void setup()
   Serial.println("\" }");
 
 
-  // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
-  //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
+  while(wait) {
+    recvWithStartEndMarkers();
 
+    if (newData == true) {
+        //Serial.println(receivedChars);
+        String inp = receivedChars;
+        int delimiter = inp.indexOf('|');
+        
+        if (delimiter > 0) {
+          String eco2base = inp.substring(0, delimiter);
+          String tvocbase = inp.substring((delimiter+1), inp.length());
+          int16_t hexEco2 = strtol(eco2base.c_str(), NULL, 0);
+          int16_t hexTvoc = strtol(tvocbase.c_str(), NULL, 0);
+          Serial.print("Baseline data received! ECO2: ");
+          Serial.print(eco2base);
+          Serial.print(", TVOC: ");
+          Serial.println(tvocbase);
+
+          // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
+          //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
+          sgp.setIAQBaseline(hexEco2, hexTvoc);  // Will vary for each sensor!
+          wait=false;
+        } else {
+          wait=false;
+        }
+       
+        newData = false;
+    }
+    
+  }
 }
 
 void process_data (char * data)
@@ -104,6 +138,48 @@ void loop()
 }
 
 //////////////////////////////////////////////////////////////////
+
+
+void recvWithStartEndMarkers() {
+    static boolean recvInProgress = false;
+    static byte ndx = 0;
+    char startMarker = '<';
+    char endMarker = '>';
+    char rc;
+ 
+ // if (Serial.available() > 0) {
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (recvInProgress == true) {
+            if (rc != endMarker) {
+                receivedChars[ndx] = rc;
+                ndx++;
+                if (ndx >= numChars) {
+                    ndx = numChars - 1;
+                }
+            }
+            else {
+                receivedChars[ndx] = '\0'; // terminate the string
+                recvInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }
+    }
+}
+
+void showNewData() {
+    if (newData == true) {
+        Serial.print("This just in ... ");
+        Serial.println(receivedChars);
+        newData = false;
+    }
+}
 
 void printData
 (
@@ -155,9 +231,9 @@ void printData
       //Serial.println("Failed to get baseline readings");
       return;
     } else {
-      Serial.print("{ \"ECO2BASE\": \"");
+      Serial.print("{ \"ECO2BASE\": \"0x");
       Serial.print(eCO2_base, HEX);
-      Serial.print("\", \"TVOCBASE\": \"");
+      Serial.print("\", \"TVOCBASE\": \"0x");
       Serial.print(TVOC_base, HEX);
       Serial.print("\", \"Serial\": ");
       Serial.print("\"0x");
