@@ -1,3 +1,5 @@
+# THIS REPO IS DEPRECATED
+
 # inoklima
 Arduino indoor climate.
 Uses the breakout board sensors BME280, SGP30 and BH1750fvi.
